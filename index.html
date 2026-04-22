@@ -3,118 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시분초 양방향 계산기</title>
+    <title>정밀 시분초 계산기</title>
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
-        h2 { font-size: 1.2rem; color: #1a73e8; margin-top: 0; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; }
-        section { margin-bottom: 40px; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f5f7fa; color: #333; display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 100%; max-width: 500px; }
+        h2 { font-size: 1.1rem; margin-bottom: 15px; color: #444; border-left: 4px solid #007bff; padding-left: 10px; }
+        section { background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
         
-        .input-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; transition: border 0.2s; }
-        input:focus { border-color: #1a73e8; outline: none; }
+        .input-item { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; color: #888; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         
-        /* 읽기 전용 스타일 */
-        input[readonly] { background-color: #f8f9fa; color: #1a73e8; font-weight: bold; border: 1px dashed #cbd5e0; cursor: default; }
+        /* 입력 불가능한 란 (결과창) 스타일 */
+        input[readonly] { background-color: #f9f9f9; border-color: #eee; color: #007bff; font-weight: bold; cursor: default; }
+        .adjusted-box { background-color: #eef6ff !important; border: 1px solid #bcd9ff !important; }
 
         .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
-        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
-        button.plus { background-color: #e8f0fe; color: #1967d2; }
-        button.plus:hover { background-color: #d2e3fc; }
-        button.reset { background-color: #3c4043; color: white; width: 100%; margin-top: 15px; }
+        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; background-color: #f0f0f0; transition: 0.2s; }
+        button:hover { background-color: #e0e0e0; }
+        button.plus { background-color: #007bff; color: white; }
+        button.plus:hover { background-color: #0056b3; }
         
-        .hms-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .hms-inputs div { text-align: center; }
+        .hms-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .reset-btn { width: 100%; background: #333; color: white; margin-top: 10px; padding: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <section>
-        <h2>⏱️ 초를 시:분:초로 변환</h2>
-        <div class="input-group">
-            <label>현재값 입력 (초)</label>
-            <input type="number" id="secInput" placeholder="초 단위 숫자 입력" oninput="calculateToHMS()">
+        <h2>1. 직접 입력 및 변환</h2>
+        <div class="input-item">
+            <label>사용자 입력 (초)</label>
+            <input type="number" id="manualInput" placeholder="숫자만 입력하세요" oninput="updateManual()">
         </div>
-        
-        <div class="input-group">
-            <label>변환 결과 (시:분:초)</label>
-            <input type="text" id="hmsResult" readonly value="00:00:00">
+        <div class="input-item">
+            <label>입력값 변환 결과 (시:분:초)</label>
+            <input type="text" id="manualHms" readonly value="00:00:00">
+        </div>
+    </section>
+
+    <section style="border: 1px solid #bcd9ff; background-color: #fdfeff;">
+        <h2>2. 증감 조작 결과 (입력불가)</h2>
+        <div class="input-item">
+            <label>조작된 총 합계 (초)</label>
+            <input type="text" id="adjSec" class="adjusted-box" readonly value="0">
+        </div>
+        <div class="input-item">
+            <label>조작된 최종 시간 (시:분:초)</label>
+            <input type="text" id="adjHms" class="adjusted-box" readonly value="00:00:00">
         </div>
 
         <div class="btn-grid">
-            <button class="plus" onclick="addSec(3600)">+1시간</button>
-            <button class="plus" onclick="addSec(36000)">+10시간</button>
-            <button class="plus" onclick="addSec(60)">+1분</button>
-            <button class="plus" onclick="addSec(10)">+10초</button>
-            <button class="plus" onclick="addSec(1)">+1초</button>
-            <button class="plus" onclick="addSec(-60)">-1분</button>
+            <button class="plus" onclick="adjust(3600)">+1시간</button>
+            <button class="plus" onclick="adjust(36000)">+10시간</button>
+            <button class="plus" onclick="adjust(60)">+1분</button>
+            <button onclick="adjust(-3600)">-1시간</button>
+            <button onclick="adjust(-36000)">-10시간</button>
+            <button onclick="adjust(-60)">-1분</button>
         </div>
-        <button class="reset" onclick="resetSec()">초기화</button>
+        <button class="reset-btn" onclick="resetAll()">모든 데이터 초기화</button>
     </section>
 
     <section>
-        <h2>🔢 시:분:초를 초로 변환</h2>
-        <div class="hms-inputs">
-            <div>
-                <label>시</label>
-                <input type="number" id="hInput" value="0" min="0" oninput="calculateToSec()">
-            </div>
-            <div>
-                <label>분</label>
-                <input type="number" id="mInput" value="0" min="0" oninput="calculateToSec()">
-            </div>
-            <div>
-                <label>초</label>
-                <input type="number" id="sInput" value="0" min="0" oninput="calculateToSec()">
-            </div>
+        <h2>3. 시:분:초를 초로 반환</h2>
+        <div class="hms-row">
+            <div><label>시</label><input type="number" id="revH" value="0" oninput="reverseCalc()"></div>
+            <div><label>분</label><input type="number" id="revM" value="0" oninput="reverseCalc()"></div>
+            <div><label>초</label><input type="number" id="revS" value="0" oninput="reverseCalc()"></div>
         </div>
-        
-        <div class="input-group" style="margin-top: 20px;">
-            <label>총합 결과 (초)</label>
-            <input type="text" id="totalSecResult" readonly value="0">
+        <div class="input-item" style="margin-top:15px;">
+            <label>합산된 초 (Seconds)</label>
+            <input type="text" id="revResult" readonly value="0 초">
         </div>
     </section>
 </div>
 
 <script>
-    // --- 섹션 1 로직 ---
-    function formatTime(seconds) {
-        const absSec = Math.abs(seconds);
-        const h = Math.floor(absSec / 3600);
-        const m = Math.floor((absSec % 3600) / 60);
-        const s = absSec % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    let adjustment = 0; // 버튼으로 조작된 누적 증감값
+
+    // 초를 시:분:초 문자열로 만드는 함수
+    function toHMS(seconds) {
+        const s = Math.max(0, seconds);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     }
 
-    function calculateToHMS() {
-        const secVal = parseInt(document.getElementById('secInput').value) || 0;
-        document.getElementById('hmsResult').value = formatTime(secVal);
+    // 1. 직접 입력란 업데이트
+    function updateManual() {
+        const val = parseInt(document.getElementById('manualInput').value) || 0;
+        document.getElementById('manualHms').value = toHMS(val);
+        updateAdjustedDisplay(); // 입력값이 바뀌면 조작 결과 영역도 함께 갱신
     }
 
-    function addSec(amount) {
-        const input = document.getElementById('secInput');
-        let current = parseInt(input.value) || 0;
-        current += amount;
-        if (current < 0) current = 0;
-        input.value = current;
-        calculateToHMS();
+    // 2. 증감 버튼 로직
+    function adjust(amount) {
+        adjustment += amount;
+        updateAdjustedDisplay();
     }
 
-    function resetSec() {
-        document.getElementById('secInput').value = '';
-        document.getElementById('hmsResult').value = '00:00:00';
-    }
-
-    // --- 섹션 2 로직 ---
-    function calculateToSec() {
-        const h = parseInt(document.getElementById('hInput').value) || 0;
-        const m = parseInt(document.getElementById('mInput').value) || 0;
-        const s = parseInt(document.getElementById('sInput').value) || 0;
+    // 조작 결과 영역(섹션 2) 갱신
+    function updateAdjustedDisplay() {
+        const base = parseInt(document.getElementById('manualInput').value) || 0;
+        const total = Math.max(0, base + adjustment);
         
+        document.getElementById('adjSec').value = total.toLocaleString();
+        document.getElementById('adjHms').value = toHMS(total);
+    }
+
+    // 3. 시분초 -> 초 역산 로직
+    function reverseCalc() {
+        const h = parseInt(document.getElementById('revH').value) || 0;
+        const m = parseInt(document.getElementById('revM').value) || 0;
+        const s = parseInt(document.getElementById('revS').value) || 0;
         const total = (h * 3600) + (m * 60) + s;
-        document.getElementById('totalSecResult').value = total.toLocaleString() + ' 초';
+        document.getElementById('revResult').value = total.toLocaleString() + " 초";
+    }
+
+    function resetAll() {
+        adjustment = 0;
+        document.getElementById('manualInput').value = '';
+        document.getElementById('manualHms').value = '00:00:00';
+        document.getElementById('revH').value = 0;
+        document.getElementById('revM').value = 0;
+        document.getElementById('revS').value = 0;
+        updateAdjustedDisplay();
+        reverseCalc();
     }
 </script>
 
