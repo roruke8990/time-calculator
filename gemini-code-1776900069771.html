@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시분초 계산기</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { font-size: 1.5rem; color: #333; }
+        .display { font-size: 2.5rem; font-weight: bold; margin: 1.5rem 0; color: #007bff; font-variant-numeric: tabular-nums; }
+        input[type="number"] { width: 80%; padding: 10px; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        button { padding: 10px; border: none; border-radius: 6px; background-color: #eee; cursor: pointer; transition: background 0.2s; font-weight: bold; }
+        button:hover { background-color: #ddd; }
+        button.plus { background-color: #e7f3ff; color: #007bff; }
+        button.minus { background-color: #fff0f0; color: #dc3545; }
+        .reset { margin-top: 20px; width: 100%; background: #333; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>시분초 계산기</h1>
+    
+    <input type="number" id="baseSeconds" placeholder="현재값(초) 입력" oninput="updateByInput()">
+    
+    <div class="display" id="resultDisplay">00:00:00</div>
+    
+    <div class="btn-group">
+        <button class="plus" onclick="adjustTime(3600)">+1시간</button>
+        <button class="plus" onclick="adjustTime(36000)">+10시간</button>
+        <button class="plus" onclick="adjustTime(60)">+1분</button>
+        <button class="minus" onclick="adjustTime(-3600)">-1시간</button>
+        <button class="minus" onclick="adjustTime(-36000)">-10시간</button>
+        <button class="minus" onclick="adjustTime(-60)">-1분</button>
+    </div>
+
+    <button class="reset" onclick="resetAll()">초기화</button>
+</div>
+
+<script>
+    let totalSeconds = 0;
+
+    function formatTime(seconds) {
+        const absSec = Math.abs(seconds);
+        const h = Math.floor(absSec / 3600);
+        const m = Math.floor((absSec % 3600) / 60);
+        const s = absSec % 60;
+        const formatted = 
+            String(h).padStart(2, '0') + ":" + 
+            String(m).padStart(2, '0') + ":" + 
+            String(s).padStart(2, '0');
+        return seconds < 0 ? "-" + formatted : formatted;
+    }
+
+    function updateDisplay() {
+        document.getElementById('resultDisplay').innerText = formatTime(totalSeconds);
+        document.getElementById('baseSeconds').value = totalSeconds;
+    }
+
+    function updateByInput() {
+        const val = document.getElementById('baseSeconds').value;
+        totalSeconds = parseInt(val) || 0;
+        document.getElementById('resultDisplay').innerText = formatTime(totalSeconds);
+    }
+
+    function adjustTime(amount) {
+        totalSeconds += amount;
+        if (totalSeconds < 0) totalSeconds = 0; // 음수 방지 (선택사항)
+        updateDisplay();
+    }
+
+    function resetAll() {
+        totalSeconds = 0;
+        updateDisplay();
+    }
+</script>
+
+</body>
+</html>
