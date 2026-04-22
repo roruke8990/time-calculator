@@ -3,77 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시분초 계산기</title>
+    <title>시분초 양방향 계산기</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h1 { font-size: 1.5rem; color: #333; }
-        .display { font-size: 2.5rem; font-weight: bold; margin: 1.5rem 0; color: #007bff; font-variant-numeric: tabular-nums; }
-        input[type="number"] { width: 80%; padding: 10px; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
-        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        button { padding: 10px; border: none; border-radius: 6px; background-color: #eee; cursor: pointer; transition: background 0.2s; font-weight: bold; }
-        button:hover { background-color: #ddd; }
-        button.plus { background-color: #e7f3ff; color: #007bff; }
-        button.minus { background-color: #fff0f0; color: #dc3545; }
-        .reset { margin-top: 20px; width: 100%; background: #333; color: white; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
+        h2 { font-size: 1.2rem; color: #1a73e8; margin-top: 0; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; }
+        section { margin-bottom: 40px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; transition: border 0.2s; }
+        input:focus { border-color: #1a73e8; outline: none; }
+        
+        /* 읽기 전용 스타일 */
+        input[readonly] { background-color: #f8f9fa; color: #1a73e8; font-weight: bold; border: 1px dashed #cbd5e0; cursor: default; }
+
+        .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
+        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+        button.plus { background-color: #e8f0fe; color: #1967d2; }
+        button.plus:hover { background-color: #d2e3fc; }
+        button.reset { background-color: #3c4043; color: white; width: 100%; margin-top: 15px; }
+        
+        .hms-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .hms-inputs div { text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>시분초 계산기</h1>
-    
-    <input type="number" id="baseSeconds" placeholder="현재값(초) 입력" oninput="updateByInput()">
-    
-    <div class="display" id="resultDisplay">00:00:00</div>
-    
-    <div class="btn-group">
-        <button class="plus" onclick="adjustTime(3600)">+1시간</button>
-        <button class="plus" onclick="adjustTime(36000)">+10시간</button>
-        <button class="plus" onclick="adjustTime(60)">+1분</button>
-        <button class="minus" onclick="adjustTime(-3600)">-1시간</button>
-        <button class="minus" onclick="adjustTime(-36000)">-10시간</button>
-        <button class="minus" onclick="adjustTime(-60)">-1분</button>
-    </div>
+    <section>
+        <h2>⏱️ 초를 시:분:초로 변환</h2>
+        <div class="input-group">
+            <label>현재값 입력 (초)</label>
+            <input type="number" id="secInput" placeholder="초 단위 숫자 입력" oninput="calculateToHMS()">
+        </div>
+        
+        <div class="input-group">
+            <label>변환 결과 (시:분:초)</label>
+            <input type="text" id="hmsResult" readonly value="00:00:00">
+        </div>
 
-    <button class="reset" onclick="resetAll()">초기화</button>
+        <div class="btn-grid">
+            <button class="plus" onclick="addSec(3600)">+1시간</button>
+            <button class="plus" onclick="addSec(36000)">+10시간</button>
+            <button class="plus" onclick="addSec(60)">+1분</button>
+            <button class="plus" onclick="addSec(10)">+10초</button>
+            <button class="plus" onclick="addSec(1)">+1초</button>
+            <button class="plus" onclick="addSec(-60)">-1분</button>
+        </div>
+        <button class="reset" onclick="resetSec()">초기화</button>
+    </section>
+
+    <section>
+        <h2>🔢 시:분:초를 초로 변환</h2>
+        <div class="hms-inputs">
+            <div>
+                <label>시</label>
+                <input type="number" id="hInput" value="0" min="0" oninput="calculateToSec()">
+            </div>
+            <div>
+                <label>분</label>
+                <input type="number" id="mInput" value="0" min="0" oninput="calculateToSec()">
+            </div>
+            <div>
+                <label>초</label>
+                <input type="number" id="sInput" value="0" min="0" oninput="calculateToSec()">
+            </div>
+        </div>
+        
+        <div class="input-group" style="margin-top: 20px;">
+            <label>총합 결과 (초)</label>
+            <input type="text" id="totalSecResult" readonly value="0">
+        </div>
+    </section>
 </div>
 
 <script>
-    let totalSeconds = 0;
-
+    // --- 섹션 1 로직 ---
     function formatTime(seconds) {
         const absSec = Math.abs(seconds);
         const h = Math.floor(absSec / 3600);
         const m = Math.floor((absSec % 3600) / 60);
         const s = absSec % 60;
-        const formatted = 
-            String(h).padStart(2, '0') + ":" + 
-            String(m).padStart(2, '0') + ":" + 
-            String(s).padStart(2, '0');
-        return seconds < 0 ? "-" + formatted : formatted;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
-    function updateDisplay() {
-        document.getElementById('resultDisplay').innerText = formatTime(totalSeconds);
-        document.getElementById('baseSeconds').value = totalSeconds;
+    function calculateToHMS() {
+        const secVal = parseInt(document.getElementById('secInput').value) || 0;
+        document.getElementById('hmsResult').value = formatTime(secVal);
     }
 
-    function updateByInput() {
-        const val = document.getElementById('baseSeconds').value;
-        totalSeconds = parseInt(val) || 0;
-        document.getElementById('resultDisplay').innerText = formatTime(totalSeconds);
+    function addSec(amount) {
+        const input = document.getElementById('secInput');
+        let current = parseInt(input.value) || 0;
+        current += amount;
+        if (current < 0) current = 0;
+        input.value = current;
+        calculateToHMS();
     }
 
-    function adjustTime(amount) {
-        totalSeconds += amount;
-        if (totalSeconds < 0) totalSeconds = 0; // 음수 방지 (선택사항)
-        updateDisplay();
+    function resetSec() {
+        document.getElementById('secInput').value = '';
+        document.getElementById('hmsResult').value = '00:00:00';
     }
 
-    function resetAll() {
-        totalSeconds = 0;
-        updateDisplay();
+    // --- 섹션 2 로직 ---
+    function calculateToSec() {
+        const h = parseInt(document.getElementById('hInput').value) || 0;
+        const m = parseInt(document.getElementById('mInput').value) || 0;
+        const s = parseInt(document.getElementById('sInput').value) || 0;
+        
+        const total = (h * 3600) + (m * 60) + s;
+        document.getElementById('totalSecResult').value = total.toLocaleString() + ' 초';
     }
 </script>
 
